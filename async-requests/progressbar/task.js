@@ -1,36 +1,18 @@
-'use strict'
+"use strict";
 
-let xhr = new XMLHttpRequest();
-xhr.open('GET', 'https://students.netoservices.ru/nestjs-backend/poll');
-xhr.send();
+const progress = document.getElementById("progress");
+const form = document.getElementById("form");
 
-xhr.addEventListener('readystatechange', () => {
-    if(xhr.readyState === 4 && xhr.status === 200) {
-        let data = JSON.parse(xhr.response);
-        document.getElementById('poll__title').innerText = data.data.title;
-        let answer = data.data.answers;
-        answer.forEach(element => {
-            document.getElementById('poll__answers').insertAdjacentHTML('beforeEnd', `<button class="poll__answer">
-            ${element}</button>`);
-        });
-        let btn = Array.from(document.querySelectorAll('.poll__answer'));
-        btn.forEach(el => {
-            el.addEventListener('click', () => {
-                alert('Спасибо, ваш голос засчитан!');
-                xhr.open('POST','https://students.netoservices.ru/nestjs-backend/poll');
-                xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-                xhr.addEventListener('load', () => showResults(JSON.parse(xhr.response)));
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+  let input = form.elements.file;
+  let file = input.files[0];
+  let xhr = new XMLHttpRequest();
 
-                xhr.send(`vote=${data.id}&answer=${btn.indexOf(el)}`);
-            });
-        });
-    }
+  xhr.upload.onprogress = function (event) {
+    progress.value = event.loaded / event.total;
+  };
+
+  xhr.open("POST", "https://students.netoservices.ru/nestjs-backend/upload");
+  xhr.send(file);
 });
-function showResults(resp) {
-    const total = resp.stat.reduce( (total, item) =>
-        total + item.votes, 0
-    );
-    document.getElementById('poll__answers').innerText = resp.stat.reduce((html, item) =>
-       html + item.answer + ': ' + (item.votes / total * 100).toFixed(2) + '%\n', ''
-    );
-}       
